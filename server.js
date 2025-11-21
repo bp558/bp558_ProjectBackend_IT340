@@ -93,9 +93,10 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/notes", auth, async (req, res) => {
   try {
     const note = await Note.create({
+      title: req.body.title,
       content: req.body.content,
       attachments: req.body.attachments || [],
-      department: req.user.department, // secure
+      department: req.user.department,
       createdAt: new Date()
     });
 
@@ -104,6 +105,47 @@ app.post("/api/notes", auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// UPDATE NOTE
+app.put("/api/notes/:id", auth, async (req, res) => {
+  try {
+    const note = await Note.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        department: req.user.department // security: only same department
+      },
+      {
+        title: req.body.title,
+        content: req.body.content,
+        attachments: req.body.attachments
+      },
+      { new: true }
+    );
+
+    if (!note) return res.status(404).json({ error: "Note not found" });
+
+    res.json(note);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE NOTE
+app.delete("/api/notes/:id", auth, async (req, res) => {
+  try {
+    const deleted = await Note.findOneAndDelete({
+      _id: req.params.id,
+      department: req.user.department
+    });
+
+    if (!deleted) return res.status(404).json({ error: "Note not found" });
+
+    res.json({ message: "Note deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // GET NOTES FOR LOGGED-IN USER'S DEPARTMENT
 app.get("/api/notes", auth, async (req, res) => {
