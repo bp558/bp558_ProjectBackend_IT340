@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // logging logic
-const { exec } = requre("child_process");
+const { exec } = require("child_process");
 function sendLog(message) {
   exec(`echo "$(date) - ${message}" | nc 192.168.56.40 5000`);
 }
