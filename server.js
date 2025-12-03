@@ -13,6 +13,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// logging logic
+const { exec } = requre("child_process");
+function sendLog(message) {
+  exec(`echo "$(date) - ${message}" | nc 192.168.56.40 5000`);
+}
+
 // ----------------- DATABASE CONNECTION -----------------
 mongoose.connect("mongodb://192.168.56.30:27017/testdb")
   .then(() => console.log("Connected to MongoDB"))
@@ -61,6 +67,8 @@ app.post("/api/register", async (req, res) => {
       department
     });
 
+    sendLog(`User registered: ${email}, Dept: ${department}`);
+
     res.json({ message: "User created", user });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -83,6 +91,8 @@ app.post("/api/login", async (req, res) => {
     { expiresIn: "2h" }
   );
 
+  sendLog(`User login: ${email}`); // log added
+
   res.json({ token });
 });
 
@@ -99,6 +109,8 @@ app.post("/api/notes", auth, async (req, res) => {
       department: req.user.department,
       createdAt: new Date()
     });
+
+    sendLog(`Note created: ${note._id}, By User: ${req.user.userId}, Dept: ${req.user.department}`); // log
 
     res.json(note);
   } catch (err) {
@@ -124,6 +136,8 @@ app.put("/api/notes/:id", auth, async (req, res) => {
 
     if (!note) return res.status(404).json({ error: "Note not found" });
 
+    sendLog(`Note updated: ${req.params.id}, By User: ${req.user.userId}`);// log
+
     res.json(note);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -139,6 +153,8 @@ app.delete("/api/notes/:id", auth, async (req, res) => {
     });
 
     if (!deleted) return res.status(404).json({ error: "Note not found" });
+
+    sendLog(`Note deleted: ${req.params.id}, By User: ${req.user.userId}`); // log
 
     res.json({ message: "Note deleted" });
   } catch (err) {
